@@ -37,3 +37,7 @@ src/main/resources/application.properties
 *.osrm
 *.jar
 *.log
+### Safety engine ###
+**/__pycache__/
+.pytest_cache/
+*.pyc

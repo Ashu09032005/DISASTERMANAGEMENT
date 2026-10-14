@@ -1,124 +1,134 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Disaster Aware Smart Routing System</title>
-
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-
-    <style>
-        body{ margin:0; font-family:Arial; background:#f4f6f9; }
-        .container{ display:flex; height:100vh; }
-        .sidebar{
-            width:320px;
-            background:#1f2a38;
-            color:white;
-            padding:20px;
-            overflow-y:auto;
-        }
-        input,select{
-            width:100%;
-            padding:8px;
-            margin:6px 0 12px 0;
-            border:none;
-            border-radius:4px;
-        }
-        button{
-            width:100%;
-            padding:10px;
-            background:#3b82f6;
-            color:white;
-            border:none;
-            border-radius:4px;
-            cursor:pointer;
-            margin-bottom:10px;
-        }
-        .results{
-            background:#111827;
-            padding:10px;
-            border-radius:5px;
-        }
-        #map{ flex:1; }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Safe Route Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Devanagari:wght@400;700&family=Noto+Sans+Tamil:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="console.css">
 </head>
-
 <body>
+<div class="app">
+  <aside class="panel" aria-label="Controls">
+    <header class="brand">
+      <h1>Safe Route Console</h1>
+      <p id="modeNote" class="muted">Connecting to the safety engine…</p>
+    </header>
 
-<div class="container">
+    <nav class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="route">Route</button>
+      <button role="tab" aria-selected="false" data-tab="ask">Ask</button>
+      <button role="tab" aria-selected="false" data-tab="report">Report</button>
+      <button role="tab" aria-selected="false" data-tab="admin">Review</button>
+    </nav>
 
-    <div class="sidebar">
-
-        <h2>Disaster Aware Smart Routing System</h2>
-
-        <label>Start Latitude</label>
-        <input type="text" id="startLat" value="28.7041"/>
-
-        <label>Start Longitude</label>
-        <input type="text" id="startLon" value="77.1025"/>
-
-        <label>End Latitude</label>
-        <input type="text" id="endLat" value="28.6139"/>
-
-        <label>End Longitude</label>
-        <input type="text" id="endLon" value="77.2090"/>
-
-        <button onclick="calculateRoute()">Calculate Route</button>
-
-        <div class="results">
-            <h3>Route Info</h3>
-            <p id="distance"></p>
-            <p id="duration"></p>
-        </div>
-
-        <hr>
-
-        <!-- GEO AI -->
-        <h3>Geographical AI Advisory</h3>
-        <input type="text" id="geoQuestion" placeholder="Ask something..."/>
-        <button onclick="askGeoAI()">Ask AI</button>
-        <p id="geoResult"></p>
-
-        <hr>
-
-        <!-- DISASTER ZONE -->
-        <h3>Disaster Zone</h3>
-        <input type="text" id="disLat" placeholder="Latitude"/>
-        <input type="text" id="disLon" placeholder="Longitude"/>
-        <input type="text" id="disRadius" value="300"/>
-        <button onclick="setDisasterZone()">Mark Disaster Zone</button>
-
-        <hr>
-
-        <!-- PREDICTION -->
-        <h3>Disaster Prediction</h3>
-        <input type="text" id="predCity" placeholder="City"/>
-        <select id="predWeather">
-            <option>Clear</option>
-            <option>Storm</option>
-            <option>Heavy Rain</option>
-            <option>Extreme Heat</option>
+    <!-- ROUTE -->
+    <section class="tab" id="tab-route">
+      <p class="hint" id="pickHint">Click the map to set where you start, then where you are going.</p>
+      <div class="pts">
+        <div><span class="dot o"></span><span id="oTxt">Start not set</span></div>
+        <div><span class="dot d"></span><span id="dTxt">Destination not set</span></div>
+      </div>
+      <label>Vehicle
+        <select id="vehicle"></select>
+      </label>
+      <label>Leave in
+        <select id="depart">
+          <option value="0">now</option><option value="15">15 min</option>
+          <option value="30">30 min</option><option value="60">1 hour</option>
         </select>
-        <input type="text" id="predTemp" placeholder="Temperature"/>
-        <input type="text" id="predRain" placeholder="Rainfall"/>
-        <button onclick="predictDisaster()">Predict</button>
+      </label>
+      <div class="row">
+        <button class="primary" id="planBtn" disabled>Find a safe route</button>
+        <button class="ghost" id="clearBtn">Clear</button>
+      </div>
+      <div id="planOut" aria-live="polite"></div>
+      <div id="tripOut" aria-live="polite"></div>
+    </section>
 
+    <!-- ASK -->
+    <section class="tab" id="tab-ask" hidden>
+      <p class="hint">Answers are checked against live hazard data before you see them. Your start point is used as your location.</p>
+      <label>Language
+        <select id="lang"><option value="en">English</option><option value="hi">हिन्दी</option><option value="ta">தமிழ்</option></select>
+      </label>
+      <label>Your question
+        <textarea id="question" rows="3" placeholder="Is it safe to drive to my destination? / Where is the nearest shelter?"></textarea>
+      </label>
+      <div class="row">
+        <button class="primary" id="askBtn">Ask</button>
+      </div>
+      <div class="chips">
+        <button class="chip" data-q="Is it safe to go to my destination?">Safe to go?</button>
+        <button class="chip" data-q="Where is the nearest shelter?">Nearest shelter</button>
+        <button class="chip" data-q="Any hazards near me?">Hazards near me</button>
+      </div>
+      <div id="askOut" aria-live="polite"></div>
+    </section>
 
-        <p id="predictionResult"></p>
-        <form action="/logout" method="post">
-            <button>
-                Logout
-            </button>
-        </form>
+    <!-- REPORT -->
+    <section class="tab" id="tab-report" hidden>
+      <p class="hint">Click the map where you see the problem. Reports are reviewed before they change anyone's route; three independent reports nearby confirm it automatically.</p>
+      <div class="pts"><div><span class="dot r"></span><span id="rTxt">Location not set</span></div></div>
+      <label>What is happening
+        <select id="rHazard"><option value="flood">Water on the road</option><option value="landslide">Landslide / debris</option><option value="storm">Fallen tree or pole</option><option value="closure">Road closed</option></select>
+      </label>
+      <label>Water depth
+        <select id="rDepth"><option value="ankle">Ankle deep</option><option value="knee">Knee deep</option><option value="waist">Waist deep</option><option value="unknown">Not sure</option></select>
+      </label>
+      <label>Note (optional)
+        <input id="rText" maxlength="200" placeholder="e.g. underpass near the bus depot">
+      </label>
+      <button class="primary" id="reportBtn" disabled>Send report</button>
+      <div id="reportOut" aria-live="polite"></div>
+    </section>
 
+    <!-- ADMIN -->
+    <section class="tab" id="tab-admin" hidden>
+      <p class="hint">Approve or reject reported hazards. Approving one re-checks only the trips that pass through it.</p>
+      <button class="ghost" id="refreshPending">Refresh list</button>
+      <div id="pendingOut"></div>
+      <h2>Close a road</h2>
+      <p class="hint">Click two points on the map along the road, then confirm.</p>
+      <div class="row"><button class="ghost" id="closureStart">Pick two points</button><button class="primary" id="closureSave" disabled>Close for 6 hours</button></div>
+      <h2>Official alert (CAP XML)</h2>
+      <textarea id="capXml" rows="4" placeholder="Paste a CAP 1.2 alert from SACHET / IMD"></textarea>
+      <button class="ghost" id="capBtn">Load alert</button>
+      <div id="adminOut" aria-live="polite"></div>
+    </section>
 
+    <footer class="foot" id="foot"></footer>
+  </aside>
+
+  <main class="mapwrap">
+    <div id="map" aria-label="Map"></div>
+    <div class="legend" aria-hidden="true">
+      <span><i class="sw flood"></i>Water</span><span><i class="sw landslide"></i>Landslide</span>
+      <span><i class="sw storm"></i>Strong wind</span><span><i class="sw pending"></i>Reported, unreviewed</span>
+      <span><i class="ln ok"></i>Safe route</span><span><i class="ln bad"></i>Unsafe route</span>
     </div>
-
-
-    <div id="map"></div>
-
+    <section class="ribbon" aria-label="Forecast time">
+      <div class="clock">
+        <div class="now" id="clockNow">--:--</div>
+        <div class="muted" id="clockSub">scenario time</div>
+      </div>
+      <div class="scrub">
+        <label for="offset" class="scrubLabel">Showing hazards at <strong id="offsetTxt">now</strong></label>
+        <input type="range" id="offset" min="0" max="120" step="15" value="0">
+        <div class="ticks"><span>now</span><span>+30</span><span>+60</span><span>+90</span><span>+120 min</span></div>
+      </div>
+      <div class="sim" id="simCtl">
+        <button class="ghost" data-adv="15">+15 min</button>
+        <button class="ghost" data-adv="60">+1 h</button>
+        <label class="tgl"><input type="checkbox" id="truthTgl"> Actual flooding</label>
+      </div>
+    </section>
+    <div id="toast" role="status" aria-live="polite"></div>
+  </main>
 </div>
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="script.js"></script>
-
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="console.js"></script>
 </body>
 </html>

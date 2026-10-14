@@ -1,0 +1,25 @@
+# One command to run the whole system locally:  docker compose up --build
+# Console: http://localhost:8080  (Spring gateway, Google sign-in)  or  http://localhost:8000 (engine only)
+services:
+  engine:
+    build:
+      context: .
+      dockerfile: safety-engine/Dockerfile
+    environment:
+      ENGINE_MODE: scenario          # scenario = simulated storm (demo); live = real weather + OSRM
+      ENGINE_KEY: ${ENGINE_KEY:-change-me}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      DEMO_ADMIN: "0"
+    ports: ["8000:8000"]
+  gateway:
+    build: .
+    environment:
+      ENGINE_URL: http://engine:8000
+      ENGINE_KEY: ${ENGINE_KEY:-change-me}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      SPRING_APPLICATION_JSON: '{"app":{"security":{"enabled":${SECURITY_ENABLED:-true}}}}'
+    ports: ["8080:8080"]
+    depends_on: [engine]

@@ -1,0 +1,23 @@
+# Copy to application.properties (which is git-ignored) and fill in your values.
+server.port=${PORT:8080}
+
+# --- Google sign-in (OAuth 2.0) ---------------------------------------------
+# Set app.security.enabled=false to run locally without Google credentials.
+app.security.enabled=true
+spring.security.oauth2.client.registration.google.client-id=${GOOGLE_CLIENT_ID:}
+spring.security.oauth2.client.registration.google.client-secret=${GOOGLE_CLIENT_SECRET:}
+spring.security.oauth2.client.registration.google.scope=openid,email,profile
+
+# Comma-separated e-mails allowed to approve reports, close roads and load CAP alerts
+app.admin-emails=${ADMIN_EMAILS:}
+# Treat every signed-in user as admin (local demo only)
+app.demo-admin=false
+
+# --- Safety engine (Python, modules M1-M6) -----------------------------------
+engine.url=${ENGINE_URL:http://localhost:8000}
+engine.key=${ENGINE_KEY:}
+
+# --- Legacy Geography AI (original /geo-ai endpoint) --------------------------
+groq.api.key=${GROQ_API_KEY:}
+groq.model=llama-3.3-70b-versatile
+groq.temperature=0.2

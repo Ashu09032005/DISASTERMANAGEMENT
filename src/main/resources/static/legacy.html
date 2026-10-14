@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Disaster Aware Smart Routing System</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+    <style>
+        body{ margin:0; font-family:Arial; background:#f4f6f9; }
+        .container{ display:flex; height:100vh; }
+        .sidebar{
+            width:320px;
+            background:#1f2a38;
+            color:white;
+            padding:20px;
+            overflow-y:auto;
+        }
+        input,select{
+            width:100%;
+            padding:8px;
+            margin:6px 0 12px 0;
+            border:none;
+            border-radius:4px;
+        }
+        button{
+            width:100%;
+            padding:10px;
+            background:#3b82f6;
+            color:white;
+            border:none;
+            border-radius:4px;
+            cursor:pointer;
+            margin-bottom:10px;
+        }
+        .results{
+            background:#111827;
+            padding:10px;
+            border-radius:5px;
+        }
+        #map{ flex:1; }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="sidebar">
+
+        <h2>Disaster Aware Smart Routing System</h2>
+
+        <label>Start Latitude</label>
+        <input type="text" id="startLat" value="28.7041"/>
+
+        <label>Start Longitude</label>
+        <input type="text" id="startLon" value="77.1025"/>
+
+        <label>End Latitude</label>
+        <input type="text" id="endLat" value="28.6139"/>
+
+        <label>End Longitude</label>
+        <input type="text" id="endLon" value="77.2090"/>
+
+        <button onclick="calculateRoute()">Calculate Route</button>
+
+        <div class="results">
+            <h3>Route Info</h3>
+            <p id="distance"></p>
+            <p id="duration"></p>
+        </div>
+
+        <hr>
+
+        <!-- GEO AI -->
+        <h3>Geographical AI Advisory</h3>
+        <input type="text" id="geoQuestion" placeholder="Ask something..."/>
+        <button onclick="askGeoAI()">Ask AI</button>
+        <p id="geoResult"></p>
+
+        <hr>
+
+        <!-- DISASTER ZONE -->
+        <h3>Disaster Zone</h3>
+        <input type="text" id="disLat" placeholder="Latitude"/>
+        <input type="text" id="disLon" placeholder="Longitude"/>
+        <input type="text" id="disRadius" value="300"/>
+        <button onclick="setDisasterZone()">Mark Disaster Zone</button>
+
+        <hr>
+
+        <!-- PREDICTION -->
+        <h3>Disaster Prediction</h3>
+        <input type="text" id="predCity" placeholder="City"/>
+        <select id="predWeather">
+            <option>Clear</option>
+            <option>Storm</option>
+            <option>Heavy Rain</option>
+            <option>Extreme Heat</option>
+        </select>
+        <input type="text" id="predTemp" placeholder="Temperature"/>
+        <input type="text" id="predRain" placeholder="Rainfall"/>
+        <button onclick="predictDisaster()">Predict</button>
+
+
+        <p id="predictionResult"></p>
+        <form action="/logout" method="post">
+            <button>
+                Logout
+            </button>
+        </form>
+
+
+    </div>
+
+
+    <div id="map"></div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="script.js"></script>
+<p style="position:fixed;bottom:6px;left:6px;margin:0;font:12px Arial;background:#fff;padding:4px 8px;border-radius:4px">Legacy page (original design). <a href="/index.html">Open the safety console</a></p>
+
+</body>
+</html>

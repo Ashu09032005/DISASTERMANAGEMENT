@@ -4,3 +4,18 @@ services:
     env: native
     buildCommand: mvn clean package
     startCommand: java -jar target/*.jar
+    envVars:
+      - key: ENGINE_URL
+        fromService: { type: web, name: safety-engine, property: hostport }
+      - key: ENGINE_KEY
+        sync: false
+  - type: web
+    name: safety-engine
+    env: docker
+    dockerfilePath: ./safety-engine/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: ENGINE_KEY
+        sync: false
+      - key: ENGINE_MODE
+        value: scenario
