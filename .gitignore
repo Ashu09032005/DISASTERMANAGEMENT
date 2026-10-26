@@ -38,6 +38,7 @@ src/main/resources/application.properties
 *.jar
 *.log
 ### Safety engine ###
+**/.venv/
 **/__pycache__/
 .pytest_cache/
 *.pyc
