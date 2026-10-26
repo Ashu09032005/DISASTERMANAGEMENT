@@ -28,6 +28,16 @@ TOOL_SPECS = [
             "lon": {"type": "number"}, "lat": {"type": "number"}, "vehicle": {"type": "string"}, "n": {"type": "integer"}},
             "required": ["lon", "lat"]}}},
     {"type": "function", "function": {
+        "name": "get_route_explanation", "description": "Auditable decision record for a route id (why safe/unsafe, blockers, counterfactual departures).",
+        "parameters": {"type": "object", "properties": {
+            "route_id": {"type": "string"}, "lang": {"type": "string", "enum": ["en", "hi", "ta"]}},
+            "required": ["route_id"]}}},
+    {"type": "function", "function": {
+        "name": "get_point_forecast", "description": "Cell-level hazard probabilities and feature attribution at a lon/lat for a horizon in minutes.",
+        "parameters": {"type": "object", "properties": {
+            "lon": {"type": "number"}, "lat": {"type": "number"}, "horizon_min": {"type": "integer"}},
+            "required": ["lon", "lat"]}}},
+    {"type": "function", "function": {
         "name": "get_sop", "description": "Official-guidance clauses for a hazard type in a language.",
         "parameters": {"type": "object", "properties": {
             "hazard": {"type": "string", "enum": ["flood", "landslide", "storm", "any"]},
@@ -90,6 +100,26 @@ class Tools:
             out.append({"shelter_id": s["id"], "name": s["name"], "straight_km": round(s["distance_m"] / 1000, 2),
                         "route_id": ch, "reachable": ch is not None})
         return {"shelters": out}
+
+    def get_route_explanation(self, route_id: str, lang=None):
+        now = self.svc.now()
+        rec = self.svc.explain_route(route_id, lang or self.lang)
+        if rec is None:
+            return {"error": "unknown route id"}
+        qid = f"Q{len(self.ledger.objects) + 1:05d}"
+        self.ledger.put(qid, "explanation", now, rec, self.svc.store.version)
+        slim = {k: rec[k] for k in ("route_id", "feasible", "p_safe", "margin_s", "reason", "narrative", "counterfactual_departures", "baseline_present_tense")}
+        slim["blockers"] = [{"class": b["class"], "p": b["p"], "arrival_time": b["arrival_time"], "summary": b["summary"]} for b in rec.get("blockers", [])]
+        return {"explanation_id": qid, **slim}
+
+    def get_point_forecast(self, lon, lat, horizon_min=60):
+        now = self.svc.now()
+        fc = self.svc.forecast_point(lon, lat, horizon_min)
+        if fc is None:
+            return {"error": "outside forecast region"}
+        fid = f"F{len(self.ledger.objects) + 1:05d}"
+        self.ledger.put(fid, "forecast", now, fc, self.svc.store.version)
+        return {"forecast_id": fid, **fc}
 
     def get_sop(self, hazard="any", lang=None):
         now = self.svc.now()

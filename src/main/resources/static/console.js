@@ -173,6 +173,18 @@
       <span class="why">${r.feasible ? (r.margin_s == null ? "no hazard forecast" : mins(r.margin_s) + " min margin") : esc(r.reason)}</span></span>
       <span class="code" title="Short code to share this route by SMS">${esc(r.route_code)}</span></li>`).join("") + `</ul>`;
     if (p.stale) html += `<p class="hint">Hazard data is ${mins(p.hazard_data_age_s)} min old, so the safety check is stricter than usual.</p>`;
+    if (p.decision_record) {
+      const dr = p.decision_record;
+      const cf = (dr.counterfactual_departures || []).map((x) =>
+        `${x.depart_offset_min ? "+" + x.depart_offset_min + " min" : "now"}: ${x.feasible ? "feasible" : "blocked"} (${Math.round(x.p_safe * 100)}%)`).join(" · ");
+      const blk = (dr.blockers || []).map((b) => `<li>${esc(b.summary)} at ${esc(b.arrival_time)}</li>`).join("");
+      html += `<details class="explain"><summary>Why this decision? (auditable record)</summary>
+        <p class="expl-narr">${esc(dr.narrative)}</p>
+        ${blk ? `<ul class="expl-blk">${blk}</ul>` : ""}
+        ${cf ? `<p class="hint"><strong>If you leave later:</strong> ${esc(cf)}</p>` : ""}
+        ${dr.baseline_present_tense && dr.baseline_present_tense.feasible && !dr.feasible ? `<p class="baseline">${esc(dr.baseline_present_tense.note)}</p>` : ""}
+        <p class="hint">Method: ${dr.method.chunks_evaluated} route segments × time windows · hazard v${dr.method.hazard_version}</p></details>`;
+    }
     html += `<button class="ghost" id="packBtn">Save offline pack for this area</button>`;
     $("planOut").innerHTML = html;
     if (chosen) $("startTrip").addEventListener("click", () => startTrip(chosen.id));

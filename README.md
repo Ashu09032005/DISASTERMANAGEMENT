@@ -20,6 +20,7 @@ Spring Boot gateway  (this repo, Java 17)
    │                                  M4 engine-agnostic detour synthesis (no graph re-preprocessing)
    │                                  M5 incremental re-validation of active trips + anti-herding
    │                                  M6 verified LLM guidance gate (English / Hindi / Tamil)
+   │                                  M7 auditable route decision records + point forecast attribution
    │                                  + evidence fusion (SACHET/CAP alerts, crowd reports, sensors), offline packs
    └── /api/route, /api/disaster/predict, /geo-ai/ask   (original endpoints, kept as the baseline)
 ```
@@ -53,6 +54,7 @@ docker compose up --build
 | `safety-engine/safe_engine/` | Engine modules (see `safety-engine/README.md`) |
 | `safety-engine/tests/` | `pytest` suite (16 tests) |
 | `safety-engine/evaluation/` | Benchmark harness and `results/RESULTS.md` (simulation results for the IDF / patent) |
+| `REVIEW.md` | Examiner / reviewer guide: novelty (M1–M7), demo script, reproduction steps |
 | `src/main/java/.../EngineProxyController.java` | Gateway: forwards `/engine/**` with user identity, role and shared key |
 | `src/main/resources/static/index.html` | New safety console (`legacy.html` is the original page) |
 | `docker-compose.yml`, `render.yaml` | Deployment |

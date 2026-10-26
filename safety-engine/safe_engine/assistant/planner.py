@@ -18,7 +18,7 @@ import httpx
 from .tools import TOOL_SPECS, Tools
 
 SYSTEM_PROMPT = """You are the safety assistant of a disaster-aware navigation system in India.
-You MUST obtain every fact by calling tools (get_route, get_hazards, get_shelters, get_sop).
+You MUST obtain every fact by calling tools (get_route, get_hazards, get_shelters, get_sop, get_route_explanation, get_point_forecast).
 Never state a route, road, shelter, hazard or safety fact from your own knowledge.
 When you are done, reply with ONLY a JSON object:
 {"claims": [ {"type": "<type>", "ids": ["<ids returned by tools>"], ...} ], "explanation": "<optional short non-safety context>"}

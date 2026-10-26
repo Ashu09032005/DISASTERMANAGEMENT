@@ -199,6 +199,20 @@ def test_plan_returns_assessed_routes(svc):
     p = svc.plan(_ll(svc, 0.6, 0.4), _ll(svc, 0.9, 0.6), "truck")
     assert p["routes"] and all("feasible" in r for r in p["routes"])
     assert p["synthetic"] is True
+    if p["chosen"]:
+        dr = p["decision_record"]
+        assert dr and dr["route_id"] == p["chosen"] and "narrative" in dr and "counterfactual_departures" in dr
+
+
+def test_explain_and_point_forecast(svc):
+    loc = _ll(svc, 0.55, 0.45)
+    fc = svc.forecast_point(loc[0], loc[1], 60)
+    assert fc and fc["probabilities"]["flood_depth_ge_15cm"] >= 0
+    assert "flood" in fc["attribution"] and "landslide" in fc["attribution"]
+    p = svc.plan(loc, _ll(svc, 0.85, 0.55), "car")
+    rid = p["chosen"] or p["routes"][0]["id"]
+    ex = svc.explain_route(rid, "en")
+    assert ex["route_id"] == rid and ex["method"]["time_aware"] is True
 
 
 def test_gate_rejects_fabricated_and_stale_claims(svc):
@@ -247,3 +261,6 @@ def test_api_smoke():
     assert c.get("/health").status_code == 200
     assert c.get("/vehicles").json()[0]["key"]
     assert c.get("/hazards").json()["type"] == "FeatureCollection"
+    st = c.get("/status").json()
+    bb = st["region"]["bbox"]
+    assert c.get(f"/forecast/point?lon={(bb[0]+bb[2])/2}&lat={(bb[1]+bb[3])/2}").status_code == 200

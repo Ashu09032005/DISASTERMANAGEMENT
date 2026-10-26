@@ -155,6 +155,22 @@ def reassess(route_id: str, c: Caller = Depends(caller)):
     return a
 
 
+@app.get("/routes/{route_id}/explain")
+def explain_route(route_id: str, lang: str = Query("en", pattern="^(en|hi|ta)$"), c: Caller = Depends(caller)):
+    rec = svc().explain_route(route_id, lang)
+    if rec is None:
+        raise HTTPException(404, "unknown route")
+    return rec
+
+
+@app.get("/forecast/point")
+def forecast_point(lon: float, lat: float, horizon_min: int = Query(60, ge=0, le=120), c: Caller = Depends(caller)):
+    fc = svc().forecast_point(lon, lat, horizon_min)
+    if fc is None:
+        raise HTTPException(400, "point outside forecast region")
+    return fc
+
+
 @app.get("/routes/decode/{code}")
 def decode(code: str, c: Caller = Depends(caller)):
     try:

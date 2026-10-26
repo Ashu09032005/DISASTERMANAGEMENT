@@ -132,8 +132,9 @@ class TwoStageCalibrated:
         self.n_static = n_static
         self.scaler = StandardScaler()
         self.prior = LogisticRegression(max_iter=500, class_weight="balanced")
-        self.gbm = HistGradientBoostingClassifier(max_iter=250, learning_rate=0.08, max_leaf_nodes=48,
-                                                  l2_regularization=1.0, class_weight="balanced", random_state=seed)
+        self.gbm = HistGradientBoostingClassifier(max_iter=320, learning_rate=0.06, max_leaf_nodes=56,
+                                                  min_samples_leaf=40, l2_regularization=1.2,
+                                                  class_weight="balanced", random_state=seed)
         self.iso = IsotonicRegression(out_of_bounds="clip", y_min=0.0, y_max=1.0)
 
     def _stage2(self, X):
@@ -156,13 +157,19 @@ class TwoStageCalibrated:
     def predict(self, X):
         return self.iso.predict(self.raw(X))
 
+    def uncertainty(self, X) -> np.ndarray:
+        """Epistemic spread: |raw GBM score − isotonic score| (wider when calibration shifts mass)."""
+        raw = self.raw(X)
+        cal = self.iso.predict(raw)
+        return np.abs(raw - cal)
+
 
 @dataclass
 class HazardModel:
     flood: TwoStageCalibrated                      # level 0.15 m (kept for compatibility)
     landslide: TwoStageCalibrated
     metrics: dict = field(default_factory=dict)
-    version: str = "m1-2"
+    version: str = "m1-3"
     flood_levels: dict = field(default_factory=dict)   # level -> TwoStageCalibrated
 
     def predict(self, hi: HorizonInputs) -> dict[str, np.ndarray]:

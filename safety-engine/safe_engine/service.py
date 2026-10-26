@@ -27,6 +27,7 @@ from .scenario import DT_S, StormScenario, TruthSimulator
 from .slices import HazardSlice, new_id
 from .sop import load_shelters, sop_for, synthetic_shelters
 from .terrain import load_esri_ascii, synthetic_terrain
+from .explain import build_decision_record, local_forecast_at
 from .train import START, load_or_train
 from .trips import Trip, TripRegistry
 from .vehicles import PROFILES, get_profile
@@ -223,10 +224,19 @@ class EngineService:
                             "geometry": {"type": "LineString", "coordinates": [list(map(lambda v: round(v, 6), self.frame.to_lonlat(*c))) for c in r.coords]},
                             "via": [self.frame.to_lonlat(*v) for v in r.via],
                             "route_code": self.route_code(r.id, vehicle)})
+            rec = build_decision_record(self, chosen["route"].id, "en") if chosen else None
             return {"routes": out, "chosen": chosen["route"].id if chosen else None, "detour": detour, "baseline": baseline,
-                    "vehicle": get_profile(vehicle).to_dict(), "depart_t": depart_t, "stale": stale,
+                    "decision_record": rec, "vehicle": get_profile(vehicle).to_dict(), "depart_t": depart_t, "stale": stale,
                     "hazard_data_age_s": round(self.now() - self.store.updated_at), "hazard_version": self.store.version,
                     "synthetic": self.synthetic}
+
+    def explain_route(self, route_id: str, lang: str = "en") -> dict | None:
+        with self.lock:
+            return build_decision_record(self, route_id, lang)
+
+    def forecast_point(self, lon: float, lat: float, horizon_min: int = 60) -> dict | None:
+        with self.lock:
+            return local_forecast_at(self, lon, lat, horizon_min)
 
     def reassess(self, route_id: str, now: float) -> dict | None:
         c = self.routes.get(route_id)

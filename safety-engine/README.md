@@ -5,7 +5,7 @@ Python 3.11+ · FastAPI · Shapely · scikit-learn. Runs fully offline in *scena
 ```bash
 pip install -r requirements.txt
 uvicorn safe_engine.api:app --port 8000      # console at http://localhost:8000, API docs at /docs
-pytest -q                                    # 16 tests
+pytest -q                                    # 17 tests
 python -m safe_engine.train                  # retrain M1 (≈45 s) -> models/hazard_model.pkl
 python -m evaluation.run_eval                # benchmarks -> evaluation/results/RESULTS.md
 ```
@@ -22,6 +22,7 @@ python -m evaluation.run_eval                # benchmarks -> evaluation/results/
 | **M4** | `detour.py` | Via-waypoints from the convex hull of the buffered first obstruction, snapped to the network; re-query the unchanged engine; iterate with a larger buffer under a time budget | detour success, latency (E3) |
 | **M5** | `trips.py`, `service.on_new_version` | Reverse index cell → (trip, time window); only trips whose remaining path meets a changed part **during its time window** are re-evaluated; hysteresis on re-routing; segment-hour load counters for capacity-aware selection | share of trips re-evaluated (E4), peak load (E5) |
 | **M6** | `assistant/` | LLM (Groq, tool calling) or the offline rule planner proposes structured claims citing tool-returned ids; `gate.py` checks ids, re-assesses routes now, checks shelters at arrival time, enforces TTLs, renders safety text from `templates.py` (en/hi/ta), strips imperative advice from free text; regenerate or refuse | wrong claims released with vs without gate (E6) |
+| **M7** | `explain.py` | Auditable **decision records**: M3 blockers, counterfactual departures, baseline B1 comparison, local M1 feature attribution at blockers; `GET /routes/{id}/explain`, `GET /forecast/point`; included in `POST /plan` for the chosen route | reviewer audit / regulatory traceability |
 | Offline | `offline.py`, `service.offline_pack` | Region pack (hazards, shelters, SOP text, road graph) and < 40-character route codes for SMS / mesh | pack size, code length (E7) |
 | Routing | `routing/` | `LocalGraphEngine` (built-in, offline, marks bridges) and `OsrmEngine` (self-hosted or public OSRM, per-segment durations) | — |
 
@@ -52,7 +53,7 @@ python -m evaluation.run_eval                # benchmarks -> evaluation/results/
 
 ## API (all JSON; see `/docs`)
 
-`GET /status` · `POST /plan` · `GET /hazards?offset_min=` · `GET /hazards/truth` (scenario) ·
+`GET /status` · `POST /plan` · `GET /routes/{id}/explain` · `GET /forecast/point` · `GET /hazards?offset_min=` · `GET /hazards/truth` (scenario) ·
 `POST /trips` · `GET /trips/{id}?since=` · `DELETE /trips/{id}` · `POST /reports` · `POST /assistant/ask` ·
 `GET /shelters` · `GET /offline/pack` · `GET /routes/decode/{code}` · `GET /model/metrics` ·
 admin: `GET /admin/pending` · `POST /admin/slices/{id}/approve|reject` · `POST /admin/closures` ·
